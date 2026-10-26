@@ -207,37 +207,39 @@ nav.tabs button.on{color:var(--accent)}
 const BUILTIN = {
  "format": "lap-log-routine/1",
  "id": "sub5-1500-8wk",
- "name": "1500m time trials · 12 weeks (5:00 → 4:50)",
+ "name": "1500m time trials · 12 weeks (4:30 → 4:20)",
  "goal": {
   "distance_m": 1500,
-  "time_s": 300
+  "time_s": 270
  },
  "paces": [
   {
    "label": "Easy / long",
-   "value": "5:15–6:00 /km",
-   "feel": "Full sentences"
+   "value": "4:50–5:40 /km",
+   "feel": "Full sentences — slower is fine"
   },
   {
    "label": "Tempo",
-   "value": "4:10 → 3:55 /km",
-   "feel": "Faster as you get fitter"
+   "value": "3:50 → 3:35 /km",
+   "feel": "Effort 7/10, faster as you get fitter"
   },
   {
    "label": "Goal pace wk 1–8",
-   "value": "80s / 400m",
-   "feel": "5:00 · 40s per 200m"
+   "value": "72s / 400m",
+   "feel": "4:30 · 36s per 200m"
   },
   {
    "label": "Goal pace wk 9–12",
-   "value": "77s / 400m",
-   "feel": "4:50 · 38.5s per 200m"
+   "value": "69s / 400m",
+   "feel": "4:20 · 34.5s per 200m"
   }
  ],
  "notes": [
+  "Week 4 1k time trial is your checkpoint: 3:00 or faster = on track for 4:30. 3:01–3:10 = carry on, expect ~4:40. Slower than 3:10 = switch to the 5:00 targets (80s per 400m) — ask Claude for that version.",
+  "If you miss a rep target by more than 2s on three reps in a session, the targets are too fast for now. Run the rest of that session 2s slower per 400m.",
+  "Week 8 decides what's next: within 5s of 4:30, carry on to week 9 (aiming for 4:20). Further off: repeat weeks 5–8 first.",
   "Time trials: use a track and start at the 1500m mark, 100m before the usual finish line (3¾ laps). Pick a cool, calm day.",
-  "Week 8 decides what's next. Under 5:05: carry on to week 9 (aiming for 4:50). Slower than 5:05: repeat weeks 5–8 first.",
-  "Tempo is run by effort (7/10). The pace should drop on its own as you get fitter; don't force it.",
+  "Tempo is run by effort (7/10). If the listed pace feels like racing, slow down — the effort matters, not the number.",
   "Warm up before every hard session: 10–15 min jog, drills, 3–4 strides. Cool down 10 min.",
   "Long run is capped at 50 min and stays conversational.",
   "Plyos go after an easy run, on grass or a track, never the day before intervals or a time trial. No box? Use a stair, bench or kerb, or do reverse lunges.",
@@ -251,17 +253,17 @@ const BUILTIN = {
     {
      "id": "s1",
      "type": "intervals",
-     "title": "8×200m @ 40s",
+     "title": "8×200m @ 36s",
      "details": "200m jog recovery (~75s)",
      "target": {
       "distance_m": 200,
-      "time_s": 40
+      "time_s": 36
      },
      "timer": [
       {
        "reps": 8,
        "label": "200m",
-       "target_s": 40,
+       "target_s": 36,
        "rest_s": 75
       }
      ]
@@ -270,7 +272,7 @@ const BUILTIN = {
      "id": "s2",
      "type": "easy",
      "title": "30–35 min easy + 6 strides",
-     "details": "5:15–6:00 /km"
+     "details": "4:50–5:40 /km"
     },
     {
      "id": "s5",
@@ -282,13 +284,13 @@ const BUILTIN = {
      "id": "s3",
      "type": "tempo",
      "title": "15 min tempo",
-     "details": "~4:10 /km · effort 7/10, short phrases only"
+     "details": "~3:50 /km · effort 7/10, short phrases only"
     },
     {
      "id": "s4",
      "type": "long",
      "title": "40 min long easy",
-     "details": "Conversational, 5:15–6:00 /km"
+     "details": "Conversational, 4:50–5:40 /km"
     }
    ]
   },
@@ -299,17 +301,17 @@ const BUILTIN = {
     {
      "id": "s1",
      "type": "intervals",
-     "title": "6×400m @ 82s",
+     "title": "6×400m @ 74s",
      "details": "90s rest between reps",
      "target": {
       "distance_m": 400,
-      "time_s": 82
+      "time_s": 74
      },
      "timer": [
       {
        "reps": 6,
        "label": "400m",
-       "target_s": 82,
+       "target_s": 74,
        "rest_s": 90
       }
      ]
@@ -318,7 +320,7 @@ const BUILTIN = {
      "id": "s2",
      "type": "easy",
      "title": "30–35 min easy + 6 strides",
-     "details": "5:15–6:00 /km"
+     "details": "4:50–5:40 /km"
     },
     {
      "id": "s5",
@@ -330,13 +332,13 @@ const BUILTIN = {
      "id": "s3",
      "type": "tempo",
      "title": "2×10 min tempo",
-     "details": "~4:10 /km · 2 min jog between · effort 7/10, short phrases only"
+     "details": "~3:50 /km · 2 min jog between · effort 7/10, short phrases only"
     },
     {
      "id": "s4",
      "type": "long",
      "title": "45 min long easy",
-     "details": "Conversational, 5:15–6:00 /km"
+     "details": "Conversational, 4:50–5:40 /km"
     }
    ]
   },
@@ -347,17 +349,17 @@ const BUILTIN = {
     {
      "id": "s1",
      "type": "intervals",
-     "title": "8×400m @ 80s",
-     "details": "90s rest — this is goal pace",
+     "title": "8×400m @ 72s",
+     "details": "90s rest — this is 4:30 pace",
      "target": {
       "distance_m": 400,
-      "time_s": 80
+      "time_s": 72
      },
      "timer": [
       {
        "reps": 8,
        "label": "400m",
-       "target_s": 80,
+       "target_s": 72,
        "rest_s": 90
       }
      ]
@@ -366,7 +368,7 @@ const BUILTIN = {
      "id": "s2",
      "type": "easy",
      "title": "30–40 min easy + 6 strides",
-     "details": "5:15–6:00 /km"
+     "details": "4:50–5:40 /km"
     },
     {
      "id": "s5",
@@ -378,13 +380,13 @@ const BUILTIN = {
      "id": "s3",
      "type": "tempo",
      "title": "20 min tempo",
-     "details": "~4:05 /km · effort 7/10, short phrases only"
+     "details": "~3:45 /km · effort 7/10, short phrases only"
     },
     {
      "id": "s4",
      "type": "long",
      "title": "50 min long easy",
-     "details": "Conversational, 5:15–6:00 /km"
+     "details": "Conversational, 4:50–5:40 /km"
     }
    ]
   },
@@ -396,16 +398,16 @@ const BUILTIN = {
      "id": "s1",
      "type": "test",
      "title": "1k time trial, all-out",
-     "details": "Target 3:15–3:20. Under 3:20 = on track.",
+     "details": "Target 3:00 or faster = on track for 4:30. 3:01–3:10 = expect ~4:40. Slower than 3:10 = switch to 5:00 targets.",
      "target": {
       "distance_m": 1000,
-      "time_s": 200
+      "time_s": 180
      },
      "timer": [
       {
        "reps": 1,
        "label": "1000m",
-       "target_s": 200,
+       "target_s": 180,
        "rest_s": 0
       }
      ]
@@ -426,13 +428,13 @@ const BUILTIN = {
      "id": "s3",
      "type": "tempo",
      "title": "15 min tempo",
-     "details": "~4:05 /km · effort 7/10, short phrases only"
+     "details": "~3:45 /km · effort 7/10, short phrases only"
     },
     {
      "id": "s4",
      "type": "long",
      "title": "45 min long easy",
-     "details": "Conversational, 5:15–6:00 /km"
+     "details": "Conversational, 4:50–5:40 /km"
     }
    ]
   },
@@ -443,23 +445,23 @@ const BUILTIN = {
     {
      "id": "s1",
      "type": "intervals",
-     "title": "3×600m @ 2:00 + 4×200m @ 38s",
+     "title": "3×600m @ 1:48 + 4×200m @ 34s",
      "details": "3 min rest after 600s, 200m jog after 200s",
      "target": {
       "distance_m": 600,
-      "time_s": 120
+      "time_s": 108
      },
      "timer": [
       {
        "reps": 3,
        "label": "600m",
-       "target_s": 120,
+       "target_s": 108,
        "rest_s": 180
       },
       {
        "reps": 4,
        "label": "200m",
-       "target_s": 38,
+       "target_s": 34,
        "rest_s": 75
       }
      ]
@@ -468,7 +470,7 @@ const BUILTIN = {
      "id": "s2",
      "type": "easy",
      "title": "35–40 min easy + 6 strides",
-     "details": "5:15–6:00 /km"
+     "details": "4:50–5:40 /km"
     },
     {
      "id": "s5",
@@ -480,13 +482,13 @@ const BUILTIN = {
      "id": "s3",
      "type": "tempo",
      "title": "3×8 min tempo",
-     "details": "~4:05 /km · 2 min jog between · effort 7/10, short phrases only"
+     "details": "~3:45 /km · 2 min jog between · effort 7/10, short phrases only"
     },
     {
      "id": "s4",
      "type": "long",
      "title": "50 min long easy",
-     "details": "Conversational, 5:15–6:00 /km"
+     "details": "Conversational, 4:50–5:40 /km"
     }
    ]
   },
@@ -497,17 +499,17 @@ const BUILTIN = {
     {
      "id": "s1",
      "type": "intervals",
-     "title": "5×400m @ 78s",
+     "title": "5×400m @ 70s",
      "details": "2 min rest — faster than goal",
      "target": {
       "distance_m": 400,
-      "time_s": 78
+      "time_s": 70
      },
      "timer": [
       {
        "reps": 5,
        "label": "400m",
-       "target_s": 78,
+       "target_s": 70,
        "rest_s": 120
       }
      ]
@@ -516,7 +518,7 @@ const BUILTIN = {
      "id": "s2",
      "type": "easy",
      "title": "35–40 min easy + 6 strides",
-     "details": "5:15–6:00 /km"
+     "details": "4:50–5:40 /km"
     },
     {
      "id": "s5",
@@ -528,13 +530,13 @@ const BUILTIN = {
      "id": "s3",
      "type": "tempo",
      "title": "20 min tempo",
-     "details": "3:55–4:00 /km · effort 7/10, short phrases only"
+     "details": "3:35–3:40 /km · effort 7/10, short phrases only"
     },
     {
      "id": "s4",
      "type": "long",
      "title": "50 min long easy",
-     "details": "Conversational, 5:15–6:00 /km"
+     "details": "Conversational, 4:50–5:40 /km"
     }
    ]
   },
@@ -545,23 +547,23 @@ const BUILTIN = {
     {
      "id": "s1",
      "type": "intervals",
-     "title": "2×800m @ 2:40 + 4×200m @ 37s",
+     "title": "2×800m @ 2:24 + 4×200m @ 33s",
      "details": "4 min rest after 800s, 200m jog after 200s",
      "target": {
       "distance_m": 800,
-      "time_s": 160
+      "time_s": 144
      },
      "timer": [
       {
        "reps": 2,
        "label": "800m",
-       "target_s": 160,
+       "target_s": 144,
        "rest_s": 240
       },
       {
        "reps": 4,
        "label": "200m",
-       "target_s": 37,
+       "target_s": 33,
        "rest_s": 75
       }
      ]
@@ -570,7 +572,7 @@ const BUILTIN = {
      "id": "s2",
      "type": "easy",
      "title": "30–35 min easy + 6 strides",
-     "details": "5:15–6:00 /km"
+     "details": "4:50–5:40 /km"
     },
     {
      "id": "s5",
@@ -582,13 +584,13 @@ const BUILTIN = {
      "id": "s3",
      "type": "tempo",
      "title": "15 min tempo",
-     "details": "3:55–4:00 /km · effort 7/10, short phrases only"
+     "details": "3:35–3:40 /km · effort 7/10, short phrases only"
     },
     {
      "id": "s4",
      "type": "long",
      "title": "45 min long easy",
-     "details": "Conversational, 5:15–6:00 /km"
+     "details": "Conversational, 4:50–5:40 /km"
     }
    ]
   },
@@ -599,17 +601,17 @@ const BUILTIN = {
     {
      "id": "s1",
      "type": "intervals",
-     "title": "4×200m @ 39s",
+     "title": "4×200m @ 35s",
      "details": "Early in the week, 2 min rest",
      "target": {
       "distance_m": 200,
-      "time_s": 39
+      "time_s": 35
      },
      "timer": [
       {
        "reps": 4,
        "label": "200m",
-       "target_s": 39,
+       "target_s": 35,
        "rest_s": 120
       }
      ]
@@ -629,17 +631,17 @@ const BUILTIN = {
     {
      "id": "s4",
      "type": "test",
-     "title": "1500m TIME TRIAL: 5:00",
-     "details": "On a track: start at the 1500m mark, 3¾ laps. Splits 400m 79–80s · 800m 2:40 · 1200m 4:01 · last 300m ~59s. Hold back for the first 300m.",
+     "title": "1500m TIME TRIAL: 4:30",
+     "details": "On a track: start at the 1500m mark, 3¾ laps. Splits 400m 72s · 800m 2:24 · 1200m 3:36 · last 300m ~54s. Hold back for the first 300m.",
      "target": {
       "distance_m": 1500,
-      "time_s": 300
+      "time_s": 270
      },
      "timer": [
       {
        "reps": 1,
        "label": "1500m",
-       "target_s": 300,
+       "target_s": 270,
        "rest_s": 0
       }
      ]
@@ -648,22 +650,22 @@ const BUILTIN = {
   },
   {
    "week": 9,
-   "focus": "Next block: aim 4:50 · rebuild",
+   "focus": "Next block: aim 4:20 · rebuild",
    "sessions": [
     {
      "id": "s1",
      "type": "intervals",
-     "title": "6×400m @ 79s",
-     "details": "90s rest. Easy week after the time trial.",
+     "title": "6×400m @ 71s",
+     "details": "90s rest. Easier week after the time trial.",
      "target": {
       "distance_m": 400,
-      "time_s": 79
+      "time_s": 71
      },
      "timer": [
       {
        "reps": 6,
        "label": "400m",
-       "target_s": 79,
+       "target_s": 71,
        "rest_s": 90
       }
      ]
@@ -672,7 +674,7 @@ const BUILTIN = {
      "id": "s2",
      "type": "easy",
      "title": "35–40 min easy + 6 strides",
-     "details": "5:15–6:00 /km"
+     "details": "4:50–5:40 /km"
     },
     {
      "id": "s5",
@@ -684,13 +686,13 @@ const BUILTIN = {
      "id": "s3",
      "type": "tempo",
      "title": "20 min tempo",
-     "details": "~4:00 /km · effort 7/10, short phrases only"
+     "details": "~3:40 /km · effort 7/10, short phrases only"
     },
     {
      "id": "s4",
      "type": "long",
      "title": "45 min long easy",
-     "details": "Conversational, 5:15–6:00 /km"
+     "details": "Conversational, 4:50–5:40 /km"
     }
    ]
   },
@@ -701,17 +703,17 @@ const BUILTIN = {
     {
      "id": "s1",
      "type": "intervals",
-     "title": "8×400m @ 77s",
-     "details": "90s rest — new goal pace",
+     "title": "8×400m @ 69s",
+     "details": "90s rest — 4:20 pace",
      "target": {
       "distance_m": 400,
-      "time_s": 77
+      "time_s": 69
      },
      "timer": [
       {
        "reps": 8,
        "label": "400m",
-       "target_s": 77,
+       "target_s": 69,
        "rest_s": 90
       }
      ]
@@ -720,7 +722,7 @@ const BUILTIN = {
      "id": "s2",
      "type": "easy",
      "title": "35–40 min easy + 6 strides",
-     "details": "5:15–6:00 /km"
+     "details": "4:50–5:40 /km"
     },
     {
      "id": "s5",
@@ -732,13 +734,13 @@ const BUILTIN = {
      "id": "s3",
      "type": "tempo",
      "title": "3×8 min tempo",
-     "details": "3:55–4:00 /km · 2 min jog between"
+     "details": "3:35–3:40 /km · 2 min jog between · effort 7/10, short phrases only"
     },
     {
      "id": "s4",
      "type": "long",
      "title": "50 min long easy",
-     "details": "Conversational, 5:15–6:00 /km"
+     "details": "Conversational, 4:50–5:40 /km"
     }
    ]
   },
@@ -749,23 +751,23 @@ const BUILTIN = {
     {
      "id": "s1",
      "type": "intervals",
-     "title": "3×600m @ 1:55 + 4×200m @ 36s",
+     "title": "3×600m @ 1:44 + 4×200m @ 32s",
      "details": "3 min rest after 600s, 200m jog after 200s",
      "target": {
       "distance_m": 600,
-      "time_s": 115
+      "time_s": 104
      },
      "timer": [
       {
        "reps": 3,
        "label": "600m",
-       "target_s": 115,
+       "target_s": 104,
        "rest_s": 180
       },
       {
        "reps": 4,
        "label": "200m",
-       "target_s": 36,
+       "target_s": 32,
        "rest_s": 75
       }
      ]
@@ -774,7 +776,7 @@ const BUILTIN = {
      "id": "s2",
      "type": "easy",
      "title": "30–35 min easy + 6 strides",
-     "details": "5:15–6:00 /km"
+     "details": "4:50–5:40 /km"
     },
     {
      "id": "s5",
@@ -786,13 +788,13 @@ const BUILTIN = {
      "id": "s3",
      "type": "tempo",
      "title": "15 min tempo",
-     "details": "3:55 /km · effort 7/10"
+     "details": "~3:35 /km · effort 7/10, short phrases only"
     },
     {
      "id": "s4",
      "type": "long",
      "title": "45 min long easy",
-     "details": "Conversational, 5:15–6:00 /km"
+     "details": "Conversational, 4:50–5:40 /km"
     }
    ]
   },
@@ -803,17 +805,17 @@ const BUILTIN = {
     {
      "id": "s1",
      "type": "intervals",
-     "title": "4×200m @ 37s",
+     "title": "4×200m @ 33s",
      "details": "Early in the week, 2 min rest",
      "target": {
       "distance_m": 200,
-      "time_s": 37
+      "time_s": 33
      },
      "timer": [
       {
        "reps": 4,
        "label": "200m",
-       "target_s": 37,
+       "target_s": 33,
        "rest_s": 120
       }
      ]
@@ -833,17 +835,17 @@ const BUILTIN = {
     {
      "id": "s4",
      "type": "test",
-     "title": "1500m TIME TRIAL: 4:50",
-     "details": "Splits 400m 77s · 800m 2:35 · 1200m 3:52 · last 300m ~58s. Hold back for the first 300m.",
+     "title": "1500m TIME TRIAL: 4:20",
+     "details": "Splits 400m 69s · 800m 2:19 · 1200m 3:28 · last 300m ~52s. Hold back for the first 300m.",
      "target": {
       "distance_m": 1500,
-      "time_s": 290
+      "time_s": 260
      },
      "timer": [
       {
        "reps": 1,
        "label": "1500m",
-       "target_s": 290,
+       "target_s": 260,
        "rest_s": 0
       }
      ]
@@ -865,7 +867,7 @@ const BUILTIN_TIMERS = {
   "8:s1":[{reps:4,label:"200m",target_s:39,rest_s:120}],
   "8:s4":[{reps:1,label:"1500m",target_s:300,rest_s:0}]
 };
-BUILTIN.weeks.forEach(w=>w.sessions.forEach(s=>{ const t=BUILTIN_TIMERS[w.week+":"+s.id]; if(t) s.timer=t; }));
+BUILTIN.weeks.forEach(w=>w.sessions.forEach(s=>{ const t=BUILTIN_TIMERS[w.week+":"+s.id]; if(t&&!s.timer) s.timer=t; }));
 
 /* ---------- Helpers ---------- */
 const $ = s => document.querySelector(s);
