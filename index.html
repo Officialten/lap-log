@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Lap Log</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#EDF1F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A1117" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: one-column phone app — sticky header, scrolling view, fixed bottom tab bar (lane-line motif) */
+:root{
+  --bg:#EDF1F5; --surface:#FFFFFF; --sunk:#E3E9EF; --ink:#0F1B26; --muted:#56687A; --line:#D3DCE4;
+  --accent:#1B5BD6; --accent-ink:#FFFFFF; --accent-soft:#DCE6FA;
+  --track:#D2452A; --good:#1C8448; --good-soft:#DAF0E2; --warn:#A86C12;
+  --hero-bg:#1B5BD6; --hero-ink:#FFFFFF; --done-ink:#FFFFFF; --bar:#A9C1F2;
+  color-scheme:light;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0A1117; --surface:#131D27; --sunk:#0F1820; --ink:#E5ECF2; --muted:#8C9FB0; --line:#243341;
+  --accent:#5E8FF0; --accent-ink:#06101C; --accent-soft:#1A2B47;
+  --track:#F0694C; --good:#45B874; --good-soft:#143323; --warn:#E2A94C;
+  --hero-bg:#14294D; --hero-ink:#E3ECFF; --done-ink:#06140C; --bar:#34548C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A1117; --surface:#131D27; --sunk:#0F1820; --ink:#E5ECF2; --muted:#8C9FB0; --line:#243341;
+  --accent:#5E8FF0; --accent-ink:#06101C; --accent-soft:#1A2B47;
+  --track:#F0694C; --good:#45B874; --good-soft:#143323; --warn:#E2A94C;
+  --hero-bg:#14294D; --hero-ink:#E3ECFF; --done-ink:#06140C; --bar:#34548C; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 calc(84px + env(safe-area-inset-bottom,0px));font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:640px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);letter-spacing:.01em;margin:0;text-wrap:balance}
+h2{font-size:1.5rem}
+h3{font-size:1.15rem}
+.label{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 10px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{flex:none}
+.brand h1{font-size:1.6rem;line-height:1}
+.sync{font-size:.75rem;padding:4px 10px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.sync.cloud{background:var(--good-soft);color:var(--good)}
+
+main{display:flex;flex-direction:column;gap:16px;padding-block:4px 16px}
+.view{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.grow{flex:1 1 0;min-width:0}
+
+/* goal hero — stopwatch readout */
+.hero{background:var(--hero-bg);color:var(--hero-ink);border:none;position:relative;overflow:hidden}
+.hero .label{color:inherit;opacity:.8}
+.hero::after{content:"";position:absolute;inset:auto -10% -38px -10%;height:64px;
+  background:repeating-linear-gradient(90deg,transparent 0 46px,rgba(255,255,255,.18) 46px 48px);transform:skewX(-20deg)}
+.readout{font-family:var(--f-display);font-weight:700;font-size:3.6rem;line-height:.95;letter-spacing:.01em}
+.readout small{font-size:1.2rem;font-weight:600;margin-left:6px;opacity:.85}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1}
+.hero-stat b{display:block;font-family:var(--f-display);font-size:1.6rem;line-height:1.1}
+
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.tile b{display:block;font-family:var(--f-display);font-size:1.7rem;line-height:1.1;margin-top:2px}
+.tile .sub{font-size:.8rem;color:var(--muted)}
+
+.weeks{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.wk{flex:none;min-width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-family:var(--f-display);font-size:1.1rem;font-weight:600;cursor:pointer;position:relative}
+.wk.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.wk.now::after{content:"";position:absolute;left:50%;bottom:5px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--track)}
+
+.session{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start}
+.lane{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:1.1rem;background:var(--sunk);color:var(--muted)}
+.lane.done{background:var(--good);color:var(--done-ink)}
+.session .title{font-weight:600;font-size:1.05rem}
+.session .details{font-size:.9rem;color:var(--muted);margin-top:2px}
+.chip{display:inline-block;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);margin-bottom:4px}
+.chip.intervals,.chip.test,.chip.race{background:var(--accent-soft);color:var(--accent)}
+.chip.race{background:var(--track);color:#fff}
+.chip.tempo{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer;min-height:42px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.small{min-height:36px;padding:6px 12px;font-size:.88rem}
+.btn.danger{color:var(--track)}
+.btn.confirm{background:var(--track);border-color:var(--track);color:#fff}
+.btn:disabled{opacity:.5}
+
+.paces{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pace{background:var(--sunk);border-radius:10px;padding:8px 10px;min-width:0}
+.pace .v{font-weight:600}
+.pace .f{font-size:.8rem;color:var(--muted)}
+
+form .field{display:flex;flex-direction:column;gap:4px;min-width:0}
+input,select,textarea{background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+textarea{min-height:110px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fgrid .full{grid-column:1/-1}
+.calc{font-family:var(--f-display);font-size:1.25rem;font-weight:600}
+.note{font-size:.85rem;color:var(--muted)}
+.msg{font-size:.9rem;padding:8px 12px;border-radius:10px;background:var(--good-soft);color:var(--good)}
+.msg.err{background:color-mix(in srgb,var(--track) 15%,transparent);color:var(--track)}
+
+.runs{display:flex;flex-direction:column}
+.run{display:grid;grid-template-columns:56px 1fr auto;gap:12px;padding:12px 0;border-top:1px solid var(--line);align-items:center}
+.run:first-child{border-top:none}
+.run .d{font-family:var(--f-display);text-align:center;line-height:1}
+.run .d b{display:block;font-size:1.5rem}
+.run .d span{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.run .main{min-width:0}
+.run .t{font-family:var(--f-display);font-size:1.3rem;font-weight:600}
+.run .meta{font-size:.85rem;color:var(--muted);overflow-wrap:anywhere}
+.pr{color:var(--good);font-weight:600}
+
+.empty{text-align:center;padding:28px 12px;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-family:var(--f-display);font-size:1.25rem;margin-bottom:4px}
+
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:10px;font-family:var(--f-body)}
+
+.routine{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.routine:first-child{border-top:none}
+.routine input[type=radio]{width:22px;height:22px;min-height:0;accent-color:var(--accent)}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+details summary{cursor:pointer;font-weight:600}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(5,1fr);
+  padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+nav.tabs button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;color:var(--muted);font-size:.75rem;font-weight:600;cursor:pointer;border-radius:10px;min-height:52px}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button.on{color:var(--accent)}
+/* timer */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--sunk);border-radius:12px;padding:4px}
+.seg button{border:none;background:none;border-radius:9px;min-height:40px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.clock{border-radius:16px;padding:20px 16px;text-align:center;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden}
+.clock.work{background:var(--hero-bg);color:var(--hero-ink);border-color:var(--hero-bg)}
+.gps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}
+.gps div{background:var(--sunk);border-radius:10px;padding:8px 4px}
+.gps b{display:block;font-family:var(--f-display);font-size:1.5rem;line-height:1.1}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer;min-height:36px}
+.chips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.clock.rest{background:var(--good-soft);color:var(--good);border-color:transparent}
+.clock.ready{background:color-mix(in srgb,var(--warn) 16%,var(--surface));color:var(--warn);border-color:transparent}
+.clock .phase{font-family:var(--f-display);font-size:1.3rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.clock .big{font-family:var(--f-display);font-weight:700;font-size:clamp(4.5rem,24vw,7.5rem);line-height:.9;font-variant-numeric:tabular-nums}
+.clock .sub{font-size:1rem;opacity:.9;min-height:1.4em}
+.bar{height:6px;border-radius:3px;background:color-mix(in srgb,currentColor 18%,transparent);overflow:hidden}
+.bar i{display:block;height:100%;background:currentColor;width:0}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+.ctl .btn{min-height:52px;font-size:1rem}
+.tap{min-height:120px!important;font-family:var(--f-display);font-size:1.8rem!important;letter-spacing:.04em}
+.blk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:8px;align-items:end}
+.blk .field input{padding:8px;min-height:42px}
+.reps{display:flex;flex-direction:column}
+.rep{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;padding:8px 0;border-top:1px solid var(--line);align-items:baseline}
+.rep:first-child{border-top:none}
+.rep b{font-family:var(--f-display);font-size:1.25rem}
+.diff.slow{color:var(--track)} .diff.fast{color:var(--good)}
+.check{display:flex;gap:10px;align-items:center}
+.check input{width:22px;height:22px;min-height:0;accent-color:var(--accent)}
+.sbtns{display:flex;flex-direction:column;gap:6px}
+@media (min-width:700px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}.paces{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (prefers-reduced-motion:no-preference){.view{animation:fade .18s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}
+</style>
+
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="6" width="28" height="18" rx="9" fill="none" stroke="var(--accent)" stroke-width="2.5"/><rect x="6" y="11" width="18" height="8" rx="4" fill="none" stroke="var(--track)" stroke-width="2"/></svg>
+      <h1>Lap Log</h1>
+    </div>
+    <span id="sync" class="sync">Saved on this phone</span>
+  </header>
+  <main id="app" aria-live="polite"></main>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <button data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Plan</button>
+  <button data-tab="timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 4h10M9 4v3M15 4v3M5 20h14M7 20v-4l5-4 5 4v4M7 7v1l5 4 5-4V7"/></svg>Timer</button>
+  <button data-tab="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4"/></svg>Log</button>
+  <button data-tab="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 20h18M6 16l4-5 3 3 5-7"/></svg>Progress</button>
+  <button data-tab="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Routines</button>
+</nav>
+
+<script>
+/* ---------- Built-in routine (same format you can import) ---------- */
+const BUILTIN = {
+  format:"lap-log-routine/1",
+  id:"sub5-1500-8wk",
+  name:"Sub-5:00 1500m · 8 weeks",
+  goal:{distance_m:1500,time_s:300},
+  paces:[
+    {label:"Easy",value:"5:15–6:00 /km",feel:"Conversational"},
+    {label:"Threshold",value:"3:55–4:10 /km",feel:"Comfortably hard"},
+    {label:"Goal pace",value:"80s / 400m",feel:"40s per 200m"},
+    {label:"Faster",value:"37–38s / 200m",feel:"Quick, relaxed"}
+  ],
+  notes:[
+    "Warm up before every hard session: 10–15 min jog, drills, 3–4 strides. Cool down 10 min.",
+    "Keep a rest or easy day between hard sessions. Strength twice a week.",
+    "Sharp pain in shins, Achilles or knees: stop and take 2–3 easy days."
+  ],
+  weeks:[
+    {week:1,focus:"Base",sessions:[
+      {id:"s1",type:"intervals",title:"8×200m @ 40s",details:"200m jog recovery",target:{distance_m:200,time_s:40}},
+      {id:"s2",type:"easy",title:"30–40 min easy + 6 strides",details:"5:15–6:00 /km"},
+      {id:"s3",type:"tempo",title:"15 min tempo",details:"3:55–4:10 /km"},
+      {id:"s4",type:"long",title:"45 min long easy",details:"Conversational pace"}]},
+    {week:2,focus:"Base",sessions:[
+      {id:"s1",type:"intervals",title:"6×400m @ 82s",details:"90s rest between reps",target:{distance_m:400,time_s:82}},
+      {id:"s2",type:"easy",title:"30–40 min easy + 6 strides",details:"5:15–6:00 /km"},
+      {id:"s3",type:"tempo",title:"2×10 min tempo",details:"2 min jog between"},
+      {id:"s4",type:"long",title:"50 min long easy",details:"Conversational pace"}]},
+    {week:3,focus:"Build",sessions:[
+      {id:"s1",type:"intervals",title:"8×400m @ 80s",details:"90s rest — this is goal pace",target:{distance_m:400,time_s:80}},
+      {id:"s2",type:"easy",title:"30–40 min easy + 6 strides",details:"5:15–6:00 /km"},
+      {id:"s3",type:"tempo",title:"20 min tempo",details:"3:55–4:10 /km"},
+      {id:"s4",type:"long",title:"55 min long easy",details:"Conversational pace"}]},
+    {week:4,focus:"Checkpoint · lighter week",sessions:[
+      {id:"s1",type:"test",title:"1k time trial, all-out",details:"Target 3:15–3:20. Under 3:20 = on track.",target:{distance_m:1000,time_s:200}},
+      {id:"s2",type:"easy",title:"30 min easy + 4 strides",details:"Recovery"},
+      {id:"s3",type:"tempo",title:"15 min tempo",details:"3:55–4:10 /km"},
+      {id:"s4",type:"long",title:"50 min long easy",details:"Conversational pace"}]},
+    {week:5,focus:"Build",sessions:[
+      {id:"s1",type:"intervals",title:"3×600m @ 2:00 + 4×200m @ 38s",details:"3 min rest after 600s, 200m jog after 200s",target:{distance_m:600,time_s:120}},
+      {id:"s2",type:"easy",title:"35–40 min easy + 6 strides",details:"5:15–6:00 /km"},
+      {id:"s3",type:"tempo",title:"3×8 min tempo",details:"2 min jog between"},
+      {id:"s4",type:"long",title:"60 min long easy",details:"Conversational pace"}]},
+    {week:6,focus:"Sharpen",sessions:[
+      {id:"s1",type:"intervals",title:"5×400m @ 78s",details:"2 min rest — faster than goal",target:{distance_m:400,time_s:78}},
+      {id:"s2",type:"easy",title:"35–40 min easy + 6 strides",details:"5:15–6:00 /km"},
+      {id:"s3",type:"tempo",title:"20 min tempo",details:"3:55–4:10 /km"},
+      {id:"s4",type:"long",title:"65 min long easy",details:"Conversational pace"}]},
+    {week:7,focus:"Sharpen",sessions:[
+      {id:"s1",type:"intervals",title:"2×800m @ 2:40 + 4×200m @ 37s",details:"4 min rest after 800s",target:{distance_m:800,time_s:160}},
+      {id:"s2",type:"easy",title:"30–35 min easy + 6 strides",details:"5:15–6:00 /km"},
+      {id:"s3",type:"tempo",title:"15 min tempo",details:"3:55–4:10 /km"},
+      {id:"s4",type:"long",title:"55 min long easy",details:"Conversational pace"}]},
+    {week:8,focus:"Taper · race",sessions:[
+      {id:"s1",type:"intervals",title:"4×200m @ 39s",details:"Early in the week, full recovery",target:{distance_m:200,time_s:39}},
+      {id:"s2",type:"easy",title:"20–30 min easy",details:"Stay loose"},
+      {id:"s3",type:"easy",title:"20 min easy + 4 strides",details:"Day before the race"},
+      {id:"s4",type:"race",title:"RACE: 1500m in 5:00",details:"Splits: 400m 79–80s · 800m 2:40 · 1200m 4:01 · last 300m ~59s",target:{distance_m:1500,time_s:300}}]}
+  ]
+};
+
+/* interval-timer setups for the built-in sessions: blocks of reps, target per rep, rest after each rep (seconds) */
+const BUILTIN_TIMERS = {
+  "1:s1":[{reps:8,label:"200m",target_s:40,rest_s:75}],
+  "2:s1":[{reps:6,label:"400m",target_s:82,rest_s:90}],
+  "3:s1":[{reps:8,label:"400m",target_s:80,rest_s:90}],
+  "4:s1":[{reps:1,label:"1000m",target_s:200,rest_s:0}],
+  "5:s1":[{reps:3,label:"600m",target_s:120,rest_s:180},{reps:4,label:"200m",target_s:38,rest_s:75}],
+  "6:s1":[{reps:5,label:"400m",target_s:78,rest_s:120}],
+  "7:s1":[{reps:2,label:"800m",target_s:160,rest_s:240},{reps:4,label:"200m",target_s:37,rest_s:75}],
+  "8:s1":[{reps:4,label:"200m",target_s:39,rest_s:120}],
+  "8:s4":[{reps:1,label:"1500m",target_s:300,rest_s:0}]
+};
+BUILTIN.weeks.forEach(w=>w.sessions.forEach(s=>{ const t=BUILTIN_TIMERS[w.week+":"+s.id]; if(t) s.timer=t; }));
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayISO = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
+const parseISO = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const dayDiff = (a,b) => Math.round((parseISO(b)-parseISO(a))/864e5);
+const uid = p => p+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function parseTime(str){
+  str=String(str||"").trim(); if(!str) return null;
+  const parts=str.split(":").map(x=>x.trim());
+  if(parts.some(p=>p===""||isNaN(Number(p)))) return null;
+  let s=0; for(const p of parts) s=s*60+Number(p);
+  return s>0?s:null;
+}
+function fmt(s){
+  if(s==null||!isFinite(s)) return "–";
+  const neg=s<0; s=Math.abs(s);
+  const r=Math.round(s*10)/10, h=Math.floor(r/3600), m=Math.floor((r%3600)/60), sec=r%60;
+  const ss=(sec<10?"0":"")+(Number.isInteger(sec)?sec:sec.toFixed(1));
+  return (neg?"−":"")+(h?h+":"+String(m).padStart(2,"0"):m)+":"+ss;
+}
+const pacePerKm = (t,d) => d>0 ? t/(d/1000) : null;
+const per400 = (t,d) => d>0 ? t/(d/400) : null;
+const fmtDist = m => m>=1000 ? (m/1000).toFixed(m%1000?2:0).replace(/\.?0+$/,"")+" km" : m+" m";
+/* Riegel: estimate 1500m from a hard effort at another distance */
+const eq1500 = r => (r.distance_m>=400 && r.distance_m<=5000 && r.time_s) ? r.time_s*Math.pow(1500/r.distance_m,1.06) : null;
+const isEffort = r => r.type==="test"||r.type==="race";
+const TYPE_LABEL = {easy:"Easy",long:"Long",tempo:"Tempo",intervals:"Intervals",test:"Time trial",race:"Race",other:"Other"};
+
+/* ---------- State & storage ---------- */
+const LS="laplog.v1";
+const state = { runs:[], routines:[], settings:{_id:"settings",kind:"settings",activeRoutine:BUILTIN.id,startDate:todayISO()},
+  mode:"local", tab:"today", viewWeek:null, prefill:null, flash:null, paceType:"easy" };
+let col=null;
+
+function lsLoad(){ try{ const raw=localStorage.getItem(LS); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
+function lsSave(){ try{ localStorage.setItem(LS, JSON.stringify({docs:allDocs()})); }catch(e){} }
+function allDocs(){ return [...state.runs, ...state.routines, state.settings]; }
+function ingest(docs){
+  const runs=[], routines=[]; let settings=null;
+  for(const d of docs){
+    if(d.kind==="run") runs.push(d);
+    else if(d.kind==="routine") routines.push(d);
+    else if(d.kind==="settings") settings=d;
+  }
+  runs.sort((a,b)=> b.date.localeCompare(a.date) || (b.created||0)-(a.created||0));
+  state.runs=runs; state.routines=routines;
+  if(settings) state.settings={...state.settings,...settings};
+  lsSave(); render();
+}
+async function put(doc){
+  const {_id,...body}=doc;
+  const others = d => d._id!==_id;
+  if(doc.kind==="run") state.runs=[doc,...state.runs.filter(others)].sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0));
+  else if(doc.kind==="routine") state.routines=[...state.routines.filter(others),doc];
+  else state.settings=doc;
+  lsSave(); render();
+  if(col){ try{ await col.doc(_id).set(body); }catch(e){ showFlash(e&&e.code==="quota_exceeded"?"Storage is full. Delete some old runs.":"Couldn't sync that change. It's kept on this device.",true); } }
+}
+async function del(doc){
+  state.runs=state.runs.filter(d=>d._id!==doc._id);
+  state.routines=state.routines.filter(d=>d._id!==doc._id);
+  lsSave(); render();
+  if(col){ try{ await col.doc(doc._id).delete(); }catch(e){ showFlash("Couldn't sync the delete.",true); } }
+}
+async function initCloud(){
+  try{
+    if(!window.claude||!window.claude.use) return;
+    const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
+    const id = user ? await user.id() : null;
+    if(!db||!id) return;
+    col=db.collection("data/users/"+id);
+    const localDocs=allDocs();
+    let first=true;
+    col.onSnapshot(snap=>{
+      const docs=snap.docs.map(d=>({...d.data(),_id:d.id}));
+      if(first && !snap.metadata.fromCache){
+        first=false;
+        /* first cloud sync: push anything recorded on this device that the account doesn't have yet */
+        const have=new Set(docs.map(d=>d._id));
+        const missing=localDocs.filter(d=>!have.has(d._id)&&(d.kind==="run"||d.kind==="routine"));
+        missing.forEach(d=>{ const {_id,...b}=d; col.doc(_id).set(b).catch(()=>{}); });
+        docs.push(...missing);
+      }
+      state.mode="cloud"; ingest(docs);
+    }, ()=>{ col=null; state.mode="local"; render(); });
+  }catch(e){}
+}
+
+/* ---------- Routine helpers ---------- */
+const routines = () => [BUILTIN, ...state.routines.map(r=>r.routine)];
+const activeRoutine = () => routines().find(r=>r.id===state.settings.activeRoutine) || BUILTIN;
+function currentWeek(r){
+  const n=r.weeks.length, d=dayDiff(state.settings.startDate,todayISO());
+  return { week: Math.min(n,Math.max(1,Math.floor(d/7)+1)), before: d<0 ? -d : 0, after: d>=n*7 };
+}
+const sessionRef = (r,w,s) => r.id+":w"+w+":"+s.id;
+function validateRoutine(o){
+  if(!o||typeof o!=="object") return "That isn't a routine. Paste the JSON I gave you.";
+  if(!o.name) return "The routine needs a \"name\".";
+  if(!Array.isArray(o.weeks)||!o.weeks.length) return "The routine needs a \"weeks\" list.";
+  for(const [i,w] of o.weeks.entries()){
+    if(!Array.isArray(w.sessions)||!w.sessions.length) return "Week "+(i+1)+" has no sessions.";
+    for(const [j,s] of w.sessions.entries()) if(!s.title) return "Week "+(i+1)+", session "+(j+1)+" needs a \"title\".";
+  }
+  return null;
+}
+function normalizeRoutine(o){
+  const id = String(o.id || o.name).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60) || uid("routine");
+  return { format:"lap-log-routine/1", id, name:String(o.name), goal:o.goal||null, paces:Array.isArray(o.paces)?o.paces:[], notes:Array.isArray(o.notes)?o.notes:[],
+    weeks:o.weeks.map((w,i)=>({week:i+1,focus:w.focus||"",sessions:w.sessions.map((s,j)=>({id:s.id||"s"+(j+1),type:TYPE_LABEL[s.type]?s.type:"other",title:String(s.title),details:s.details||"",target:s.target||null,
+      timer:Array.isArray(s.timer)?s.timer.filter(b=>b&&b.reps>0).map(b=>({reps:Math.min(50,Math.round(b.reps)),label:String(b.label||""),target_s:Number(b.target_s)||0,rest_s:Number(b.rest_s)||0})):null}))})) };
+}
+/* timer setup for a session: explicit "timer" blocks, else a best guess from its title and target */
+function timerFor(s){
+  if(Array.isArray(s.timer)&&s.timer.length) return s.timer;
+  if(!["intervals","test","race"].includes(s.type)) return null;
+  const reps=Number((s.title.match(/(\d+)\s*[×x]/)||[])[1])||1;
+  const dm=s.title.match(/(\d+(?:\.\d+)?)\s*(km|m)\b/i);
+  const label=dm?dm[1]+dm[2].toLowerCase():(s.target&&s.target.distance_m?s.target.distance_m+"m":"");
+  const rm=(s.details||"").match(/(\d+(?:\.\d+)?)\s*(min|s|sec)\b/i);
+  const rest=reps>1?(rm?Number(rm[1])*(rm[2].toLowerCase()==="min"?60:1):90):0;
+  return [{reps,label,target_s:s.target&&s.target.time_s||0,rest_s:rest}];
+}
+const labelMeters = l => { const m=String(l||"").match(/(\d+(?:\.\d+)?)\s*(km|m)\b/i); return m?Number(m[1])*(m[2].toLowerCase()==="km"?1000:1):0; };
+
+/* ---------- Stats ---------- */
+function bestEffort(){
+  let best=null;
+  for(const r of state.runs) if(isEffort(r)){ const e=eq1500(r); if(e&&(!best||e<best.eq)) best={eq:e,run:r}; }
+  return best;
+}
+function weekStartISO(iso){ const d=parseISO(iso); const k=(d.getDay()+6)%7; d.setDate(d.getDate()-k); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function weeklyKm(n=8){
+  const out=[]; const start=parseISO(weekStartISO(todayISO()));
+  for(let i=n-1;i>=0;i--){ const d=new Date(start); d.setDate(d.getDate()-7*i);
+    const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    out.push({iso,km:0}); }
+  for(const r of state.runs){ const w=weekStartISO(r.date); const b=out.find(x=>x.iso===w); if(b&&r.distance_m) b.km+=r.distance_m/1000; }
+  return out;
+}
+
+/* ---------- Views ---------- */
+function render(){
+  const s=$("#sync"); s.textContent = "Saved on this phone"; s.className="sync"+(state.mode==="cloud"?" cloud":"");
+  document.querySelectorAll("nav.tabs button").forEach(b=>{ b.classList.toggle("on",b.dataset.tab===state.tab); b.setAttribute("aria-current",b.dataset.tab===state.tab?"page":"false"); });
+  const app=$("#app");
+  const html = {today:viewToday,timer:viewTimer,log:viewLog,progress:viewProgress,plan:viewPlan}[state.tab]();
+  app.innerHTML = (state.flash?`<div class="msg${state.flash.err?" err":""}">${esc(state.flash.text)}</div>`:"") + `<section class="view">${html}</section>`;
+  bind();
+}
+function showFlash(text,err){ state.flash={text,err}; render(); clearTimeout(showFlash.t); showFlash.t=setTimeout(()=>{state.flash=null;render();},3500); }
+
+function viewToday(){
+  const r=activeRoutine(), cw=currentWeek(r);
+  const w = state.viewWeek || cw.week;
+  const week = r.weeks[w-1];
+  const best=bestEffort(), goal=r.goal;
+  const doneRefs=new Set(state.runs.map(x=>x.ref).filter(Boolean));
+  const status = cw.before ? `Starts in ${cw.before} day${cw.before>1?"s":""}` : cw.after ? "Plan finished" : `Week ${cw.week} of ${r.weeks.length}`;
+  const gap = best&&goal ? best.eq-goal.time_s : null;
+  return `
+  <div class="card hero stack">
+    <div class="label">${esc(r.name)}</div>
+    <div class="readout">${goal?fmt(goal.time_s):"—"}<small>${goal?fmtDist(goal.distance_m):""} goal</small></div>
+    <div class="hero-grid">
+      <div class="hero-stat"><span class="label">Best 1.5k equivalent</span><b>${best?fmt(best.eq):"No test yet"}</b></div>
+      <div class="hero-stat"><span class="label">${gap==null?"Status":gap<=0?"Goal reached":"To go"}</span><b>${gap==null?esc(status):gap<=0?"Under by "+fmt(-gap):fmt(gap)}</b></div>
+    </div>
+  </div>
+  <div class="stack">
+    <div class="row"><h2 class="grow">Week ${w}${week.focus?` · <span class="muted">${esc(week.focus)}</span>`:""}</h2><span class="note">${esc(status)}</span></div>
+    <div class="weeks" role="tablist" aria-label="Weeks">${r.weeks.map((_,i)=>`<button class="wk${i+1===w?" on":""}${i+1===cw.week&&!cw.before&&!cw.after?" now":""}" data-week="${i+1}" aria-label="Week ${i+1}">${i+1}</button>`).join("")}</div>
+  </div>
+  <div class="card stack">
+    ${week.sessions.map((s,i)=>{ const ref=sessionRef(r,w,s), done=doneRefs.has(ref);
+      return `<div class="session">
+        <div class="lane${done?" done":""}" aria-label="${done?"Done":"Session "+(i+1)}">${done?"✓":i+1}</div>
+        <div style="min-width:0"><span class="chip ${esc(s.type)}">${esc(TYPE_LABEL[s.type]||s.type)}</span><div class="title">${esc(s.title)}</div>${s.details?`<div class="details">${esc(s.details)}</div>`:""}</div>
+        <div class="sbtns"><button class="btn small${done?"":" primary"}" data-logsession="${i}" data-w="${w}">${done?"Log again":"Log"}</button>
+        ${timerFor(s)?`<button class="btn small" data-timersession="${i}" data-w="${w}">Timer</button>`:""}</div>
+      </div>`; }).join("")}
+  </div>
+  ${r.paces&&r.paces.length?`<div class="card stack"><div class="label">Your paces</div><div class="paces">${r.paces.map(p=>`<div class="pace"><div class="f">${esc(p.label)}</div><div class="v">${esc(p.value)}</div>${p.feel?`<div class="f">${esc(p.feel)}</div>`:""}</div>`).join("")}</div></div>`:""}
+  ${r.notes&&r.notes.length?`<div class="card"><details><summary>Ground rules</summary><ul class="note" style="margin:10px 0 0;padding-left:18px">${r.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></details></div>`:""}`;
+}
+
+function viewLog(){
+  const p=state.prefill||{};
+  const t=p.type||"easy";
+  const runs=state.runs;
+  const bestByDist={}; for(const r of runs) if(isEffort(r)&&r.distance_m){ const k=r.distance_m; if(!bestByDist[k]||r.time_s<bestByDist[k]) bestByDist[k]=r.time_s; }
+  return `
+  <form id="logform" class="card stack" novalidate>
+    <div class="row"><h2 class="grow">Log a run</h2>${p.title?`<span class="chip ${esc(t)}">${esc(p.title)}</span>`:""}</div>
+    <div class="fgrid">
+      <div class="field"><label class="label" for="f-date">Date</label><input id="f-date" type="date" value="${esc(p.date||todayISO())}" required></div>
+      <div class="field"><label class="label" for="f-type">Type</label><select id="f-type">${Object.entries(TYPE_LABEL).map(([k,v])=>`<option value="${k}"${k===t?" selected":""}>${v}</option>`).join("")}</select></div>
+      <div class="field"><label class="label" for="f-dist">Distance (m)</label><input id="f-dist" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 1500 or 6000" value="${esc(p.distance_m||"")}"></div>
+      <div class="field"><label class="label" for="f-time">Time</label><input id="f-time" type="text" inputmode="decimal" placeholder="mm:ss  e.g. 5:12.4" value="${esc(p.time||"")}"></div>
+      <div class="field full"><label class="label" for="f-splits">Rep or lap splits (optional)</label><input id="f-splits" type="text" inputmode="decimal" placeholder="e.g. 80, 79, 81, 82  or  1:20, 1:19" value="${esc(p.splits||"")}"></div>
+      <div class="field"><label class="label" for="f-rpe">Effort 1–10</label><input id="f-rpe" type="number" inputmode="numeric" min="1" max="10" placeholder="7"></div>
+      <div class="field"><span class="label">Pace</span><div id="f-calc" class="calc">–</div></div>
+      <div class="field full"><label class="label" for="f-notes">Notes</label><input id="f-notes" type="text" placeholder="How it felt, weather, shoes…"></div>
+    </div>
+    <div id="f-err" class="msg err" hidden></div>
+    <div class="row"><button class="btn primary grow" type="submit">Save run</button>${p.ref?`<button class="btn" type="button" id="f-clear">Clear plan link</button>`:""}</div>
+  </form>
+  <div class="card stack">
+    <div class="row"><h2 class="grow">History</h2><span class="note">${runs.length} run${runs.length===1?"":"s"}</span></div>
+    ${runs.length?`<div class="runs">${runs.map(r=>runRow(r,bestByDist)).join("")}</div>`:
+      `<div class="empty"><b>No runs yet</b>Log your first session above, or tap Log on a session in your plan.</div>`}
+  </div>`;
+}
+function runRow(r,bestByDist){
+  const d=parseISO(r.date), mon=d.toLocaleString(undefined,{month:"short"});
+  const pk=pacePerKm(r.time_s,r.distance_m), e=isEffort(r)?eq1500(r):null;
+  const pr = isEffort(r)&&bestByDist[r.distance_m]===r.time_s;
+  const splits=Array.isArray(r.splits)&&r.splits.length?r.splits:null;
+  const avg=splits?splits.reduce((a,b)=>a+b,0)/splits.length:null;
+  const bits=[TYPE_LABEL[r.type]||r.type];
+  if(r.distance_m) bits.push(fmtDist(r.distance_m));
+  if(pk&&r.distance_m>=1000) bits.push(fmt(pk)+"/km"); else if(pk) bits.push(fmt(per400(r.time_s,r.distance_m))+"/400m");
+  if(splits) bits.push(splits.length+" splits, avg "+fmt(avg)+", best "+fmt(Math.min(...splits)));
+  if(r.rpe) bits.push("effort "+r.rpe);
+  return `<div class="run">
+    <div class="d"><b>${d.getDate()}</b><span>${mon}</span></div>
+    <div class="main"><div class="t">${r.time_s?fmt(r.time_s):(r.distance_m?fmtDist(r.distance_m):"Run")} ${pr?`<span class="pr">PB</span>`:""}</div>
+      <div class="meta">${esc(bits.join(" · "))}${e&&r.distance_m!==1500?` · ≈${fmt(e)} for 1500m`:""}</div>
+      ${r.title?`<div class="meta">${esc(r.title)}</div>`:""}${r.notes?`<div class="meta">“${esc(r.notes)}”</div>`:""}</div>
+    <button class="btn small danger" data-del="${esc(r._id)}" aria-label="Delete run">Delete</button>
+  </div>`;
+}
+
+function viewProgress(){
+  const r=activeRoutine(), goal=r.goal||{distance_m:1500,time_s:300};
+  const best=bestEffort();
+  const wk=weeklyKm(8), thisWeek=wk[wk.length-1].km;
+  const efforts=state.runs.filter(isEffort).map(x=>({x,eq:eq1500(x)})).filter(o=>o.eq).sort((a,b)=>a.x.date.localeCompare(b.x.date));
+  const doneRefs=new Set(state.runs.map(x=>x.ref).filter(Boolean));
+  const total=r.weeks.reduce((a,w)=>a+w.sessions.length,0);
+  const done=r.weeks.reduce((a,w)=>a+w.sessions.filter(s=>doneRefs.has(sessionRef(r,w.week,s))).length,0);
+  return `
+  <div class="tiles">
+    <div class="tile"><span class="label">Best 1.5k equiv.</span><b>${best?fmt(best.eq):"–"}</b><span class="sub">${best?esc(TYPE_LABEL[best.run.type]+" "+fmtDist(best.run.distance_m)+" · "+best.run.date):"Log a time trial or race"}</span></div>
+    <div class="tile"><span class="label">Gap to ${fmt(goal.time_s)}</span><b style="color:${best&&best.eq<=goal.time_s?"var(--good)":"inherit"}">${best?(best.eq<=goal.time_s?"Done":fmt(best.eq-goal.time_s)):"–"}</b><span class="sub">${best?fmt(per400(best.eq,1500))+" per 400m now":"Goal: 80s per 400m"}</span></div>
+    <div class="tile"><span class="label">This week</span><b>${thisWeek.toFixed(1)} km</b><span class="sub">Mon–Sun</span></div>
+    <div class="tile"><span class="label">Plan sessions</span><b>${done}/${total}</b><span class="sub">${esc(r.name)}</span></div>
+  </div>
+  <div class="card stack">
+    <div><h3>1500m equivalent over time</h3><div class="note">Each time trial or race converted to a 1500m estimate. The red line is your goal.</div></div>
+    ${efforts.length?effortChart(efforts,goal.time_s):`<div class="empty"><b>No time trials yet</b>Week 4 has your first one: a 1k all-out. Log it as a time trial and it appears here.</div>`}
+  </div>
+  <div class="card stack">
+    <div><h3>Pace over time</h3><div class="note">${PACE_TRACK.includes(state.paceType)?"Average rep pace per 400m. Lower is faster; the red line is goal pace (80s).":"Average pace per km. Lower is faster."}</div></div>
+    <div class="chips" role="tablist" aria-label="Run type">${["easy","long","tempo","intervals","race"].map(k=>`<button data-pace="${k}" class="${state.paceType===k?"on":""}">${k==="race"?"Trials & races":TYPE_LABEL[k]}</button>`).join("")}</div>
+    ${paceSection()}
+  </div>
+  <div class="card stack">
+    <div><h3>Weekly distance</h3><div class="note">Last 8 weeks, in km</div></div>
+    ${kmChart(wk)}
+  </div>`;
+}
+function effortChart(pts,goal){
+  const W=340,H=180,L=40,R=12,T=12,B=26;
+  const ys=pts.map(p=>p.eq).concat([goal]);
+  let lo=Math.min(...ys)-8, hi=Math.max(...ys)+8;
+  lo=Math.floor(lo/10)*10; hi=Math.ceil(hi/10)*10;
+  const t0=parseISO(pts[0].x.date).getTime(), t1=parseISO(pts[pts.length-1].x.date).getTime();
+  const X=i=> pts.length===1 ? (L+W-R)/2 : L+(parseISO(pts[i].x.date).getTime()-t0)/(t1-t0||1)*(W-L-R);
+  const Y=v=> T+(v-lo)/(hi-lo)*(H-T-B);  /* faster = higher */
+  const ticks=[]; const step=Math.max(10,Math.ceil((hi-lo)/4/10)*10); for(let v=lo; v<=hi; v+=step) ticks.push(v);
+  const yy=v=>H-B-(Y(v)-T); /* invert so lower time is higher on chart */
+  const path=pts.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+","+yy(p.eq).toFixed(1)).join(" ");
+  const last=pts[pts.length-1];
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="1500m equivalent times">
+    ${ticks.map(v=>`<line x1="${L}" x2="${W-R}" y1="${yy(v)}" y2="${yy(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${yy(v)+3}" text-anchor="end">${fmt(v)}</text>`).join("")}
+    <line x1="${L}" x2="${W-R}" y1="${yy(goal)}" y2="${yy(goal)}" stroke="var(--track)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="${W-R}" y="${yy(goal)-4}" text-anchor="end" style="fill:var(--track)">goal ${fmt(goal)}</text>
+    ${pts.length>1?`<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2"/>`:""}
+    ${pts.map((p,i)=>`<circle cx="${X(i)}" cy="${yy(p.eq)}" r="${p===last?4.5:3}" fill="${p===last?"var(--accent)":"var(--surface)"}" stroke="var(--accent)" stroke-width="2"/>`).join("")}
+    <text x="${L}" y="${H-8}">${esc(pts[0].x.date.slice(5))}</text>
+    ${pts.length>1?`<text x="${W-R}" y="${H-8}" text-anchor="end">${esc(last.x.date.slice(5))}</text>`:""}
+    <text x="${Math.min(X(pts.length-1),W-R-30)}" y="${yy(last.eq)-9}" text-anchor="middle" style="fill:var(--ink);font-weight:600">${fmt(last.eq)}</text>
+  </svg>`;
+}
+const PACE_TRACK=["intervals","race"];
+function paceOf(r){
+  const track=["intervals","test","race"].includes(r.type);
+  if(track){
+    if(Array.isArray(r.splits)&&r.splits.length&&r.distance_m){ const per=r.distance_m/r.splits.length, avg=r.splits.reduce((a,b)=>a+b,0)/r.splits.length; return avg/(per/400); }
+    return r.time_s&&r.distance_m ? per400(r.time_s,r.distance_m) : null;
+  }
+  return r.time_s&&r.distance_m>=500 ? pacePerKm(r.time_s,r.distance_m) : null;
+}
+function paceSection(){
+  const k=state.paceType, match=r=> k==="race" ? (r.type==="race"||r.type==="test") : r.type===k;
+  const pts=state.runs.filter(match).map(r=>({date:r.date,v:paceOf(r)})).filter(p=>p.v).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!pts.length) return `<div class="empty"><b>No ${esc(k==="race"?"time trials or races":TYPE_LABEL[k].toLowerCase()+" runs")} with pace yet</b>${PACE_TRACK.includes(k)?"Log a distance plus a time or rep splits.":"Log a distance and a time, or use GPS on the Stopwatch."}</div>`;
+  const unit=PACE_TRACK.includes(k)?"/400m":"/km";
+  const cut=new Date(); cut.setDate(cut.getDate()-28); const cutISO=cut.toISOString().slice(0,10);
+  const prevCut=new Date(); prevCut.setDate(prevCut.getDate()-56); const prevISO=prevCut.toISOString().slice(0,10);
+  const avg=a=>a.length?a.reduce((s,p)=>s+p.v,0)/a.length:null;
+  const recent=avg(pts.filter(p=>p.date>=cutISO)), before=avg(pts.filter(p=>p.date>=prevISO&&p.date<cutISO));
+  const diff=recent&&before?recent-before:null;
+  return `<div class="tiles" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <div class="tile"><span class="label">Last 4 weeks</span><b>${recent?fmt(recent):"–"}<span class="note"> ${unit}</span></b></div>
+      <div class="tile"><span class="label">vs 4 weeks before</span><b style="color:${diff==null?"inherit":diff<0?"var(--good)":"var(--track)"}">${diff==null?"–":(diff<0?"−":"+")+fmt(Math.abs(diff))}</b><span class="sub">${diff==null?"Needs runs in both periods":diff<0?"Faster":"Slower"}</span></div>
+    </div>${lineChart(pts,PACE_TRACK.includes(k)?80:null,unit)}`;
+}
+function lineChart(pts,goal,unit){
+  const W=340,H=170,L=44,R=12,T=14,B=24;
+  const vs=pts.map(p=>p.v).concat(goal?[goal]:[]);
+  const pad=Math.max(3,(Math.max(...vs)-Math.min(...vs))*0.15);
+  const lo=Math.min(...vs)-pad, hi=Math.max(...vs)+pad;
+  const t0=parseISO(pts[0].date).getTime(), t1=parseISO(pts[pts.length-1].date).getTime();
+  const X=i=> pts.length===1?(L+W-R)/2 : L+(parseISO(pts[i].date).getTime()-t0)/((t1-t0)||1)*(W-L-R);
+  const Y=v=> T+(v-lo)/(hi-lo)*(H-T-B);   /* faster (lower) sits higher */
+  const ticks=[lo+pad,(lo+hi)/2,hi-pad];
+  const path=pts.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+","+Y(p.v).toFixed(1)).join(" ");
+  const last=pts[pts.length-1];
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pace over time">
+    ${ticks.map(v=>`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(v)+3}" text-anchor="end">${fmt(v)}</text>`).join("")}
+    ${goal?`<line x1="${L}" x2="${W-R}" y1="${Y(goal)}" y2="${Y(goal)}" stroke="var(--track)" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${L+4}" y="${Y(goal)+12}" text-anchor="start" style="fill:var(--track)">goal ${fmt(goal)}</text>`:""}
+    ${pts.length>1?`<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2"/>`:""}
+    ${pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.v)}" r="${p===last?4.5:3}" fill="${p===last?"var(--accent)":"var(--surface)"}" stroke="var(--accent)" stroke-width="2"/>`).join("")}
+    <text x="${L}" y="${H-7}">${esc(pts[0].date.slice(5))}</text>${pts.length>1?`<text x="${W-R}" y="${H-7}" text-anchor="end">${esc(last.date.slice(5))}</text>`:""}
+    <text x="${Math.min(Math.max(X(pts.length-1),L+20),W-R-30)}" y="${Y(last.v)-9}" text-anchor="middle" style="fill:var(--ink);font-weight:600">${fmt(last.v)}${esc(unit)}</text>
+  </svg>`;
+}
+function kmChart(wk){
+  const W=340,H=150,L=28,R=8,T=14,B=24;
+  const max=Math.max(10,Math.ceil(Math.max(...wk.map(w=>w.km))/5)*5);
+  const bw=(W-L-R)/wk.length;
+  const ticks=[0,max/2,max];
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weekly distance">
+    ${ticks.map(v=>{const y=H-B-(v/max)*(H-T-B);return `<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-5}" y="${y+3}" text-anchor="end">${v}</text>`;}).join("")}
+    ${wk.map((w,i)=>{const h=(w.km/max)*(H-T-B), x=L+i*bw+bw*0.18, y=H-B-h, last=i===wk.length-1;
+      return `<rect x="${x}" y="${y}" width="${bw*0.64}" height="${Math.max(h,0)}" rx="3" fill="${last?"var(--accent)":"var(--bar)"}"/>
+      ${w.km?`<text x="${x+bw*0.32}" y="${y-3}" text-anchor="middle" style="fill:var(--ink)">${w.km.toFixed(w.km<10?1:0)}</text>`:""}
+      <text x="${x+bw*0.32}" y="${H-8}" text-anchor="middle">${esc(w.iso.slice(8))}/${esc(w.iso.slice(5,7))}</text>`;}).join("")}
+  </svg>`;
+}
+
+/* ---------- Timer engine ---------- */
+let actx=null, wakeLock=null;
+function audioOn(){ try{ if(!actx){ const A=window.AudioContext||window.webkitAudioContext; if(A) actx=new A(); } if(actx&&actx.state==="suspended") actx.resume(); }catch(e){} }
+function beep(freq,dur,vol){ if(!actx||T.mute) return; try{ const o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime;
+  o.type="square"; o.frequency.value=freq; g.gain.setValueAtTime(vol||.22,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+dur+.02); }catch(e){} }
+const buzz = p => { try{ navigator.vibrate&&navigator.vibrate(p); }catch(e){} };
+async function keepAwake(on){ try{ if(on&&!wakeLock&&navigator.wakeLock){ wakeLock=await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release",()=>{wakeLock=null;}); } else if(!on&&wakeLock){ const w=wakeLock; wakeLock=null; await w.release(); } }catch(e){} }
+const T = { mode:"interval", mute:false,
+  iv:{ status:"idle", blocks:[{reps:8,label:"400m",target_s:80,rest_s:90}], tapMode:true, lead_s:10, title:null, ref:null, type:"intervals",
+       seq:[], idx:0, t0:0, dur:0, paused:null, pausedEl:0, results:[], lastBeep:null },
+  sw:{ running:false, t0:0, acc:0, laps:[] },
+  gps:{ on:false, watch:null, last:null, dist:0, trail:[], kms:[], err:null, acc:null } };
+/* GPS distance for the stopwatch: drops fixes worse than 25 m accuracy, jitter under 3 m and impossible jumps */
+function hav(a,b){ const R=6371000,toR=Math.PI/180,dLa=(b.lat-a.lat)*toR,dLo=(b.lon-a.lon)*toR;
+  const h=Math.sin(dLa/2)**2+Math.cos(a.lat*toR)*Math.cos(b.lat*toR)*Math.sin(dLo/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+function gpsFix(pos){
+  const g=T.gps, c=pos.coords; g.acc=c.accuracy; g.err=null;
+  if(!T.sw.running||c.accuracy>25) return;
+  const p={lat:c.latitude,lon:c.longitude,t:swTotal()};
+  if(!g.last){ g.last=p; return; }
+  const d=hav(g.last,p), dt=p.t-g.last.t;
+  if(d<3) return;
+  if(dt>0&&d/dt>12){ g.last=p; return; }
+  const before=g.dist; g.dist+=d; g.last=p; g.trail.push({t:p.t,d:g.dist});
+  while(g.trail.length&&p.t-g.trail[0].t>30) g.trail.shift();
+  if(Math.floor(g.dist/1000)>Math.floor(before/1000)){ const prev=g.kms.reduce((a,b)=>a+b,0); g.kms.push(p.t-prev); beep(1100,.25); buzz([200,100,200]); if(state.tab==="timer") render(); }
+}
+function gpsStart(){
+  const g=T.gps; if(g.watch!=null||!navigator.geolocation) { if(!navigator.geolocation) g.err="GPS isn't available on this device."; return; }
+  try{ g.watch=navigator.geolocation.watchPosition(gpsFix,e=>{ g.err=e&&e.code===1?"Location is blocked here. In the phone app, allow location for Lap Log. GPS doesn't work inside the Claude page.":"Waiting for a GPS signal… go outside with a clear view of the sky.";
+      if(state.tab==="timer") render(); },{enableHighAccuracy:true,maximumAge:0,timeout:20000}); }catch(e){ g.err="GPS isn't available here."; }
+}
+function gpsStop(){ const g=T.gps; if(g.watch!=null){ try{ navigator.geolocation.clearWatch(g.watch); }catch(e){} } g.watch=null; }
+function gpsReset(){ gpsStop(); Object.assign(T.gps,{last:null,dist:0,trail:[],kms:[],err:null,acc:null}); }
+function gpsPaceNow(){ const tr=T.gps.trail; if(tr.length<2) return null; const a=tr[0],b=tr[tr.length-1]; const d=b.d-a.d,t=b.t-a.t; return d>15&&t>3?t/(d/1000):null; }
+const timerBusy = () => ["ready","work","rest","paused"].includes(T.iv.status) || T.sw.running;
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&timerBusy()) keepAwake(true); });
+const nowMs = () => performance.now();
+function fmtT(s){ s=Math.max(0,s); const m=Math.floor(s/60), r=s-m*60; return m+":"+(r<10?"0":"")+r.toFixed(1); }
+function fmtCd(s){ s=Math.max(0,Math.ceil(s-1e-9)); const m=Math.floor(s/60); return m+":"+String(s%60).padStart(2,"0"); }
+function ivElapsed(){ const iv=T.iv; return iv.status==="paused" ? iv.pausedEl : (nowMs()-iv.t0)/1000; }
+function ivPhase(name,dur,t0){ const iv=T.iv; iv.status=name; iv.dur=dur; iv.t0=t0; iv.lastBeep=null; if(state.tab==="timer") render(); }
+function ivStartRep(t0){ beep(1320,.35,.28); buzz(350); ivPhase("work", T.iv.tapMode?0:T.iv.seq[T.iv.idx].target, t0); }
+function ivEndRep(t0,time){
+  const iv=T.iv, r=iv.seq[iv.idx];
+  iv.results.push({label:r.label,target:r.target,time});
+  beep(660,.25,.25); buzz([120,80,120]);
+  if(iv.idx>=iv.seq.length-1){ iv.status="done"; keepAwake(false); beep(990,.5,.25); if(state.tab==="timer") render(); return; }
+  const rest=r.rest; iv.idx++;
+  if(rest>0) ivPhase("rest",rest,t0); else ivStartRep(t0);
+}
+function ivStart(){
+  const iv=T.iv; audioOn(); keepAwake(true);
+  iv.seq=[]; iv.blocks.forEach((b,bi)=>{ for(let k=0;k<b.reps;k++) iv.seq.push({label:b.label,target:b.target_s,rest:b.rest_s,bi,k,of:b.reps}); });
+  if(!iv.seq.length) return;
+  iv.results=[]; iv.idx=0;
+  if(iv.lead_s>0){ beep(880,.1); ivPhase("ready",iv.lead_s,nowMs()); } else ivStartRep(nowMs());
+}
+function ivTick(){
+  const iv=T.iv; if(!["ready","work","rest"].includes(iv.status)) return;
+  const el=ivElapsed();
+  if(iv.status==="work"&&iv.tapMode) return;
+  const rem=iv.dur-el;
+  if(rem<=0){ const end=iv.t0+iv.dur*1000;
+    if(iv.status==="work") ivEndRep(end,iv.dur); else ivStartRep(end); return; }
+  const sec=Math.ceil(rem); if(rem<=3&&sec!==iv.lastBeep){ iv.lastBeep=sec; beep(880,.1); buzz(60); }
+}
+function ivPause(){ const iv=T.iv; if(iv.status==="paused"){ iv.status=iv.paused; iv.t0=nowMs()-iv.pausedEl*1000; } else { iv.pausedEl=ivElapsed(); iv.paused=iv.status; iv.status="paused"; } render(); }
+function ivStop(){ const iv=T.iv; iv.status=iv.results.length?"done":"idle"; keepAwake(false); render(); }
+const swTotal = () => T.sw.acc + (T.sw.running ? (nowMs()-T.sw.t0)/1000 : 0);
+setInterval(()=>{ ivTick(); if(state.tab==="timer") paintTimer(); },100);
+
+function paintTimer(){
+  const big=$("#t-big"); if(!big) return;
+  if(T.mode==="sw"){ big.textContent=fmtT(swTotal());
+    if(T.gps.on){ const g=T.gps, el=x=>document.getElementById(x);
+      if(el("g-dist")) el("g-dist").textContent=(g.dist/1000).toFixed(2);
+      const now=gpsPaceNow(); if(el("g-now")) el("g-now").textContent=now?fmt(now):"–";
+      if(el("g-avg")) el("g-avg").textContent=g.dist>50?fmt(swTotal()/(g.dist/1000)):"–";
+      if(el("g-acc")) el("g-acc").textContent=g.err?g.err:g.acc==null?"Finding GPS…":"GPS accuracy ±"+Math.round(g.acc)+" m"+(g.acc>25?" (too weak, waiting)":""); } const cur=$("#t-sub"); if(cur){ const last=T.sw.laps.length?T.sw.laps[T.sw.laps.length-1].total:0; cur.textContent=T.sw.laps.length||T.sw.running?"Lap "+(T.sw.laps.length+1)+" · "+fmtT(swTotal()-last):""; } return; }
+  const iv=T.iv, st=iv.status==="paused"?iv.paused:iv.status, el=ivElapsed();
+  if(st==="work"&&iv.tapMode){ big.textContent=fmtT(el);
+    const r=iv.seq[iv.idx]; const sub=$("#t-sub"); if(sub&&r.target){ const d=el-r.target; sub.textContent="Target "+fmt(r.target)+(el>r.target*0.5?" · "+(d>0?"+":"−")+Math.abs(d).toFixed(1)+"s":""); } }
+  else if(["ready","rest","work"].includes(st)){ big.textContent=fmtCd(iv.dur-el); const b=$("#t-bar"); if(b) b.style.width=Math.min(100,el/iv.dur*100)+"%"; }
+}
+
+function viewTimer(){
+  const seg=`<div class="seg" role="tablist"><button data-tmode="interval" class="${T.mode==="interval"?"on":""}">Intervals</button><button data-tmode="sw" class="${T.mode==="sw"?"on":""}">Stopwatch</button></div>`;
+  return seg + (T.mode==="sw" ? viewStopwatch() : viewIntervals()) +
+    `<label class="check note"><input type="checkbox" id="t-mute"${T.mute?" checked":""}> Mute beeps (vibration stays on)</label>`;
+}
+function viewIntervals(){
+  const iv=T.iv;
+  if(iv.status==="idle"){
+    const total=iv.blocks.reduce((a,b)=>a+b.reps,0);
+    return `<div class="card stack">
+      <div><h2>${esc(iv.title||"Interval workout")}</h2><div class="note">${total} rep${total===1?"":"s"}${iv.ref?" · from your plan":""}</div></div>
+      ${iv.blocks.map((b,i)=>`<div class="blk" data-blk="${i}">
+        <div class="field"><label class="label" for="b-reps-${i}">Reps</label><input id="b-reps-${i}" data-k="reps" type="number" inputmode="numeric" min="1" max="50" value="${b.reps}"></div>
+        <div class="field"><label class="label" for="b-label-${i}">Distance</label><input id="b-label-${i}" data-k="label" type="text" value="${esc(b.label)}" placeholder="400m"></div>
+        <div class="field"><label class="label" for="b-target-${i}">Target</label><input id="b-target-${i}" data-k="target_s" type="text" inputmode="decimal" value="${b.target_s?fmt(b.target_s):""}" placeholder="1:20"></div>
+        <div class="field"><label class="label" for="b-rest-${i}">Rest</label><input id="b-rest-${i}" data-k="rest_s" type="text" inputmode="decimal" value="${b.rest_s?fmt(b.rest_s):"0"}" placeholder="1:30"></div>
+        ${iv.blocks.length>1?`<button class="btn small danger" data-rmblk="${i}" aria-label="Remove block">✕</button>`:"<span></span>"}
+      </div>`).join("")}
+      <div class="row"><button class="btn small" id="t-addblk" type="button">Add block</button><button class="btn small" id="t-clearplan" type="button"${iv.ref?"":" hidden"}>Unlink from plan</button></div>
+      <label class="check"><input type="checkbox" id="t-tap"${iv.tapMode?" checked":""}> <span>Tap to finish each rep <span class="note">(records your time; off = rep counts down from its target)</span></span></label>
+      <div class="field"><label class="label" for="t-lead">Countdown before rep 1</label><select id="t-lead">${[0,5,10,15,30].map(v=>`<option value="${v}"${v===iv.lead_s?" selected":""}>${v?v+" seconds":"None"}</option>`).join("")}</select></div>
+      <button class="btn primary tap" id="t-start" type="button">Start</button>
+    </div>`;
+  }
+  if(iv.status==="done") return `<div class="card stack"><div><h2>Workout done</h2><div class="note">${esc(iv.title||"Intervals")}</div></div>${repList()}
+      <div class="row"><button class="btn primary grow" id="t-save" type="button">Save to log</button><button class="btn" id="t-new" type="button">New workout</button></div></div>`;
+  const st=iv.status==="paused"?iv.paused:iv.status, r=iv.seq[iv.idx];
+  const repTxt=`Rep ${iv.idx+1} of ${iv.seq.length}${r.label?" · "+esc(r.label):""}`;
+  const phase = st==="ready"?"Get ready":st==="rest"?"Rest":"Run";
+  const sub = st==="ready"?"First up: "+repTxt : st==="rest"?"Next: "+repTxt+(r.target?" @ "+fmt(r.target):"") : (iv.tapMode?(r.target?"Target "+fmt(r.target):""):repTxt);
+  return `<div class="clock ${st}">
+      <div class="phase">${phase}${iv.status==="paused"?" · paused":""}</div>
+      ${st==="work"?`<div class="note" style="color:inherit;opacity:.85">${repTxt}</div>`:""}
+      <div class="big" id="t-big">0:00</div>
+      <div class="sub" id="t-sub">${sub}</div>
+      ${st==="work"&&iv.tapMode?"":`<div class="bar"><i id="t-bar"></i></div>`}
+    </div>
+    ${st==="work"&&iv.tapMode?`<button class="btn primary tap" id="t-finish" type="button"${iv.status==="paused"?" disabled":""}>Finish rep</button>`:""}
+    <div class="ctl">
+      ${st==="rest"||st==="ready"?`<button class="btn" id="t-skip" type="button">Skip</button><button class="btn" id="t-plus" type="button">+15s</button>`:""}
+      <button class="btn" id="t-pause" type="button">${iv.status==="paused"?"Resume":"Pause"}</button>
+      <button class="btn danger" id="t-stop" type="button">Stop</button>
+    </div>
+    ${iv.results.length?`<div class="card">${repList()}</div>`:""}`;
+}
+function repList(){
+  const res=T.iv.results; if(!res.length) return `<div class="note">No reps recorded.</div>`;
+  const avg=res.reduce((a,b)=>a+b.time,0)/res.length;
+  return `<div class="reps">${res.map((x,i)=>{ const d=x.target?x.time-x.target:null;
+    return `<div class="rep"><span class="note">${i+1}</span><span>${esc(x.label||"Rep")}</span><b>${fmt(x.time)}</b><span class="diff ${d==null?"":d>0.5?"slow":d<-0.5?"fast":""}">${d==null?"":(d>0?"+":"−")+Math.abs(d).toFixed(1)+"s"}</span></div>`; }).join("")}</div>
+    <div class="note">Average ${fmt(avg)} · best ${fmt(Math.min(...res.map(x=>x.time)))}</div>`;
+}
+function viewStopwatch(){
+  const sw=T.sw, laps=sw.laps, has=sw.running||sw.acc>0;
+  return `<div class="clock${sw.running?" work":""}"><div class="phase">${sw.running?"Running":has?"Paused":"Stopwatch"}</div>
+      <div class="big" id="t-big">${fmtT(swTotal())}</div><div class="sub" id="t-sub"></div></div>
+    ${!has?`<label class="check"><input type="checkbox" id="g-on"${T.gps.on?" checked":""}> <span>Track distance and pace with GPS <span class="note">(outdoor runs; keep the app open)</span></span></label>`:""}
+    ${T.gps.on?`<div class="gps"><div><span class="label">km</span><b id="g-dist">${(T.gps.dist/1000).toFixed(2)}</b></div><div><span class="label">Pace now</span><b id="g-now">–</b></div><div><span class="label">Avg /km</span><b id="g-avg">–</b></div></div>
+      <div class="note" id="g-acc">${esc(T.gps.err||"Finding GPS…")}</div>
+      ${T.gps.kms.length?`<div class="card"><div class="label">Km splits</div><div class="reps">${T.gps.kms.map((s,i)=>`<div class="rep"><span class="note">km</span><span>${i+1}</span><b>${fmt(s)}</b><span></span></div>`).join("")}</div></div>`:""}`:""}
+    <div class="ctl">
+      <button class="btn primary tap" id="sw-go" type="button">${sw.running?"Pause":has?"Resume":"Start"}</button>
+      <button class="btn tap" id="sw-lap" type="button"${sw.running?"":" disabled"}>Lap</button>
+    </div>
+    ${has&&!sw.running?`<div class="row"><button class="btn primary grow" id="sw-save" type="button">Save to log</button><button class="btn danger" id="sw-reset" type="button">Reset</button></div>`:""}
+    ${laps.length?`<div class="card"><div class="reps">${laps.map((l,i)=>`<div class="rep"><span class="note">${i+1}</span><span class="note">at ${fmtT(l.total)}</span><b>${fmt(l.lap)}</b><span></span></div>`).reverse().join("")}</div></div>`:""}`;
+}
+function bindTimer(){
+  document.querySelectorAll("[data-tmode]").forEach(b=>b.addEventListener("click",()=>{ T.mode=b.dataset.tmode; render(); }));
+  const mu=$("#t-mute"); if(mu) mu.addEventListener("change",()=>{ T.mute=mu.checked; });
+  const iv=T.iv;
+  document.querySelectorAll("[data-blk] input").forEach(inp=>inp.addEventListener("change",()=>{
+    const b=iv.blocks[Number(inp.closest("[data-blk]").dataset.blk)], k=inp.dataset.k;
+    if(k==="reps") b.reps=Math.max(1,Math.min(50,Math.round(Number(inp.value)||1)));
+    else if(k==="label") b.label=inp.value.trim();
+    else { const v=inp.value.trim()===""||inp.value.trim()==="0"?0:parseTime(inp.value); b[k]=v||0; }
+    render();
+  }));
+  document.querySelectorAll("[data-rmblk]").forEach(b=>b.addEventListener("click",()=>{ iv.blocks.splice(Number(b.dataset.rmblk),1); render(); }));
+  const on=(id,fn)=>{ const el=$("#"+id); if(el) el.addEventListener("click",fn); };
+  on("t-addblk",()=>{ const l=iv.blocks[iv.blocks.length-1]; iv.blocks.push({...l}); render(); });
+  on("t-clearplan",()=>{ iv.ref=null; iv.title=null; iv.type="intervals"; render(); });
+  const tp=$("#t-tap"); if(tp) tp.addEventListener("change",()=>{ iv.tapMode=tp.checked; });
+  const ld=$("#t-lead"); if(ld) ld.addEventListener("change",()=>{ iv.lead_s=Number(ld.value); });
+  on("t-start",ivStart);
+  on("t-finish",()=>{ if(iv.status==="work") ivEndRep(nowMs(),(nowMs()-iv.t0)/1000); });
+  on("t-skip",()=>{ if(iv.status==="rest"||iv.status==="ready") ivStartRep(nowMs()); });
+  on("t-plus",()=>{ iv.dur+=15; iv.lastBeep=null; });
+  on("t-pause",ivPause);
+  on("t-stop",ivStop);
+  on("t-new",()=>{ iv.status="idle"; iv.results=[]; render(); });
+  on("t-save",()=>{
+    const res=iv.results, dist=res.reduce((a,x)=>a+labelMeters(x.label),0), single=res.length===1;
+    state.prefill={type:iv.type||"intervals",title:iv.title||"Interval workout",ref:iv.ref,date:todayISO(),
+      distance_m:dist||"", time:single?fmt(res[0].time):"", splits:single?"":res.map(x=>fmt(x.time)).join(", ")};
+    iv.status="idle"; iv.results=[]; setTab("log");
+  });
+  const sw=T.sw;
+  const gon=$("#g-on"); if(gon) gon.addEventListener("change",()=>{ T.gps.on=gon.checked; if(gon.checked) gpsStart(); else gpsReset(); render(); });
+  on("sw-go",()=>{ audioOn(); if(sw.running){ sw.acc+=(nowMs()-sw.t0)/1000; sw.running=false; keepAwake(false); } else { sw.t0=nowMs(); sw.running=true; keepAwake(true); beep(1320,.15); if(T.gps.on){ T.gps.last=null; gpsStart(); } } render(); });
+  on("sw-lap",()=>{ if(!sw.running) return; const tot=swTotal(), prev=sw.laps.length?sw.laps[sw.laps.length-1].total:0; sw.laps.push({total:tot,lap:tot-prev}); beep(880,.08); buzz(40); render(); });
+  const gpsWasOn=()=>T.gps.on;
+  on("sw-reset",()=>{ sw.acc=0; sw.laps=[]; sw.running=false; const k=gpsWasOn(); gpsReset(); T.gps.on=k; if(k) gpsStart(); render(); });
+  on("sw-save",()=>{ const tot=swTotal(), g=T.gps, d=g.on&&g.dist>50?Math.round(g.dist):"";
+    const splits=sw.laps.length>1?sw.laps.map(l=>fmt(l.lap)).join(", "):(g.on&&g.kms.length>1?g.kms.map(s=>fmt(s)).join(", "):"");
+    state.prefill={type:g.on?"easy":"other",title:g.on?"GPS run":"Stopwatch",date:todayISO(),time:fmt(tot),distance_m:d,splits};
+    sw.acc=0; sw.laps=[]; const k=g.on; gpsReset(); T.gps.on=k; setTab("log"); });
+}
+
+function viewPlan(){
+  const list=routines(), act=activeRoutine();
+  return `
+  <div class="card stack">
+    <h2>Routines</h2>
+    <div>${list.map(r=>{ const own=state.routines.find(x=>x.routine.id===r.id);
+      return `<label class="routine"><input type="radio" name="active" value="${esc(r.id)}"${r.id===act.id?" checked":""}>
+        <div style="min-width:0"><div style="font-weight:600">${esc(r.name)}</div><div class="note">${r.weeks.length} weeks · ${r.weeks.reduce((a,w)=>a+w.sessions.length,0)} sessions${r===BUILTIN?" · built in":""}</div></div>
+        ${own?`<button type="button" class="btn small danger" data-delroutine="${esc(own._id)}">Delete</button>`:"<span></span>"}</label>`;}).join("")}</div>
+    <div class="field"><label class="label" for="p-start">Week 1 starts on</label><input id="p-start" type="date" value="${esc(state.settings.startDate)}"></div>
+  </div>
+
+  <div class="card stack">
+    <h2>Import a routine</h2>
+    <p class="note" style="margin:0">Ask Claude for a new routine "in Lap Log format", then paste it here or pick the .json file.</p>
+    <textarea id="imp-text" placeholder='{ "name": "…", "weeks": [ … ] }' spellcheck="false"></textarea>
+    <div class="row">
+      <button class="btn primary" id="imp-go" type="button">Import</button>
+      <label class="btn" for="imp-file" style="display:inline-flex;align-items:center">Choose file</label>
+      <input id="imp-file" type="file" accept=".json,application/json,text/plain" hidden>
+      <button class="btn" id="imp-tpl" type="button">Copy format example</button>
+    </div>
+    <div id="imp-msg" class="msg" hidden></div>
+  </div>
+
+  <div class="card stack">
+    <h2>On your phone</h2>
+    <p class="note" style="margin:0">Your runs are stored on this phone only and work offline. Save a backup file now and then, so you don't lose them if you clear Chrome's data or change phones.</p>
+    <button class="btn" id="inst" type="button" hidden>Install Lap Log</button>
+  </div>
+
+  <div class="card stack">
+    <h2>Backup</h2>
+    <div class="row"><button class="btn" id="bk-save" type="button">Save backup file</button><label class="btn" for="bk-file" style="display:inline-flex;align-items:center">Restore from file</label><input id="bk-file" type="file" accept=".json,application/json" hidden></div>
+    <div id="bk-msg" class="msg" hidden></div>
+  </div>`;
+}
+
+/* ---------- Events ---------- */
+function setTab(t){ state.tab=t; if(t!=="today") state.viewWeek=state.viewWeek; try{ history.replaceState(null,"","#"+t); }catch(e){} render(); window.scrollTo(0,0); }
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
+
+function armDelete(btn,fn){
+  if(btn.classList.contains("confirm")){ fn(); return; }
+  btn.classList.add("confirm"); const old=btn.textContent; btn.textContent="Confirm";
+  setTimeout(()=>{ if(btn.isConnected){ btn.classList.remove("confirm"); btn.textContent=old; } },3000);
+}
+
+function bind(){
+  if(state.tab==="timer"){ bindTimer(); paintTimer(); }
+  document.querySelectorAll("[data-pace]").forEach(b=>b.addEventListener("click",()=>{ state.paceType=b.dataset.pace; render(); }));
+  document.querySelectorAll("[data-theme-set]").forEach(b=>b.addEventListener("click",()=>{ setTheme(b.dataset.themeSet); render(); }));
+  document.querySelectorAll("[data-timersession]").forEach(b=>b.addEventListener("click",()=>{
+    const r=activeRoutine(), w=Number(b.dataset.w), s=r.weeks[w-1].sessions[Number(b.dataset.timersession)];
+    if(timerBusy()){ showFlash("A timer is already running. Stop it first on the Timer tab.",true); return; }
+    Object.assign(T.iv,{status:"idle",blocks:timerFor(s).map(x=>({...x})),title:s.title,ref:sessionRef(r,w,s),type:s.type,results:[]});
+    T.mode="interval"; setTab("timer");
+  }));
+  document.querySelectorAll("[data-week]").forEach(b=>b.addEventListener("click",()=>{ state.viewWeek=Number(b.dataset.week); render(); }));
+  document.querySelectorAll("[data-logsession]").forEach(b=>b.addEventListener("click",()=>{
+    const r=activeRoutine(), w=Number(b.dataset.w), s=r.weeks[w-1].sessions[Number(b.dataset.logsession)];
+    state.prefill={type:s.type,title:s.title,ref:sessionRef(r,w,s),distance_m:(s.type==="test"||s.type==="race")&&s.target?s.target.distance_m:"",date:todayISO()};
+    setTab("log");
+  }));
+  document.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>armDelete(b,()=>{ const r=state.runs.find(x=>x._id===b.dataset.del); if(r) del(r); })));
+  document.querySelectorAll("[data-delroutine]").forEach(b=>b.addEventListener("click",e=>{ e.preventDefault(); armDelete(b,()=>{
+    const r=state.routines.find(x=>x._id===b.dataset.delroutine); if(!r) return;
+    if(state.settings.activeRoutine===r.routine.id) put({...state.settings,activeRoutine:BUILTIN.id});
+    del(r); }); }));
+
+  const form=$("#logform");
+  if(form){
+    const calc=()=>{ const d=Number($("#f-dist").value), t=parseTime($("#f-time").value), out=$("#f-calc");
+      if(d>0&&t){ const type=$("#f-type").value; let s=d>=1000?fmt(pacePerKm(t,d))+" /km":fmt(per400(t,d))+" /400m";
+        if((type==="test"||type==="race")&&d!==1500){ const e=eq1500({distance_m:d,time_s:t}); if(e) s+=" · ≈"+fmt(e)+" 1500m"; }
+        out.textContent=s; } else out.textContent="–"; };
+    ["f-dist","f-time","f-type"].forEach(id=>$("#"+id).addEventListener("input",calc));
+    const clr=$("#f-clear"); if(clr) clr.addEventListener("click",()=>{ state.prefill=null; render(); });
+    form.addEventListener("submit",e=>{
+      e.preventDefault();
+      const err=$("#f-err"); err.hidden=true;
+      const date=$("#f-date").value, type=$("#f-type").value, dist=Number($("#f-dist").value)||0;
+      const timeRaw=$("#f-time").value.trim(), t=parseTime(timeRaw);
+      const splitsRaw=$("#f-splits").value.trim();
+      const splits=splitsRaw?splitsRaw.split(/[,\s]+/).filter(Boolean).map(parseTime):[];
+      if(!date){ err.textContent="Pick a date."; err.hidden=false; return; }
+      if(timeRaw&&!t){ err.textContent="Time should look like 5:12 or 5:12.4 (minutes:seconds)."; err.hidden=false; return; }
+      if(splits.some(x=>x==null)){ err.textContent="Splits should be seconds (80) or minutes:seconds (1:20), separated by commas."; err.hidden=false; return; }
+      if(!dist&&!t&&!splits.length){ err.textContent="Add a distance, a time or some splits."; err.hidden=false; return; }
+      const p=state.prefill||{};
+      const rpe=Number($("#f-rpe").value)||null;
+      const run={_id:uid("run"),kind:"run",date,type,distance_m:dist||null,time_s:t||null,splits:splits.length?splits:null,rpe:rpe&&rpe>=1&&rpe<=10?rpe:null,
+        notes:$("#f-notes").value.trim()||null,ref:p.ref||null,title:p.title||null,created:Date.now()};
+      state.prefill=null;
+      put(run);
+      showFlash("Run saved."+(isEffort(run)&&eq1500(run)?" That's about "+fmt(eq1500(run))+" for 1500m.":""));
+    });
+  }
+
+  document.querySelectorAll('input[name="active"]').forEach(i=>i.addEventListener("change",()=>{ state.viewWeek=null; put({...state.settings,activeRoutine:i.value}); }));
+  const st=$("#p-start"); if(st) st.addEventListener("change",()=>{ if(st.value){ state.viewWeek=null; put({...state.settings,startDate:st.value}); } });
+
+  const impMsg=(t,bad)=>{ const m=$("#imp-msg"); m.textContent=t; m.className="msg"+(bad?" err":""); m.hidden=false; };
+  const doImport=text=>{
+    let o; try{ o=JSON.parse(text.trim().replace(/^```(json)?|```$/g,"")); }catch(e){ impMsg("That isn't valid JSON. Copy the whole routine, from the first { to the last }.",true); return; }
+    const bad=validateRoutine(o); if(bad){ impMsg(bad,true); return; }
+    const routine=normalizeRoutine(o);
+    if(routine.id===BUILTIN.id) routine.id+="-copy";
+    const existing=state.routines.find(x=>x.routine.id===routine.id);
+    put({_id:existing?existing._id:uid("routine"),kind:"routine",routine,imported:Date.now()});
+    put({...state.settings,activeRoutine:routine.id});
+    state.viewWeek=null;
+    showFlash((existing?"Updated ":"Imported ")+routine.name+". It's now your active routine — set its start date below.");
+  };
+  const ig=$("#imp-go"); if(ig) ig.addEventListener("click",()=>doImport($("#imp-text").value));
+  const ifl=$("#imp-file"); if(ifl) ifl.addEventListener("change",()=>{ const f=ifl.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>doImport(String(rd.result)); rd.readAsText(f); });
+  const tpl=$("#imp-tpl"); if(tpl) tpl.addEventListener("click",()=>{
+    const ex=JSON.stringify({name:"My routine",goal:{distance_m:1500,time_s:300},paces:[{label:"Easy",value:"5:30 /km"}],
+      weeks:[{focus:"Base",sessions:[{type:"intervals",title:"6×400m @ 82s",details:"90s rest",target:{distance_m:400,time_s:82},timer:[{reps:6,label:"400m",target_s:82,rest_s:90}]},{type:"easy",title:"35 min easy"}]}]},null,2);
+    const ta=$("#imp-text");
+    navigator.clipboard.writeText(ex).then(()=>impMsg("Format example copied. Types: easy, long, tempo, intervals, test, race, other. \"timer\" is optional.")).catch(()=>{ ta.value=ex; ta.select(); impMsg("Example placed in the box above."); });
+  });
+
+  const bs=$("#bk-save"); if(bs) bs.addEventListener("click",async()=>{
+    const m=$("#bk-msg"); const data=JSON.stringify({app:"lap-log",exported:new Date().toISOString(),docs:[...state.runs,...state.routines,state.settings]},null,1);
+    const name="lap-log-backup-"+todayISO()+".json";
+    try{
+      const file=new File([data],name,{type:"application/json"});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:"Lap Log backup"}); }
+      else { const a=document.createElement("a"); a.href=URL.createObjectURL(file); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); }
+      m.textContent="Backup ready. Keep it somewhere safe, like Google Drive."; m.className="msg";
+    }catch(e){ if(e&&e.name==="AbortError") return; m.textContent="Couldn't create the backup file."; m.className="msg err"; }
+    m.hidden=false;
+  });
+  const inst=$("#inst"); if(inst&&deferredInstall){ inst.hidden=false; inst.addEventListener("click",async()=>{ deferredInstall.prompt(); await deferredInstall.userChoice.catch(()=>{}); deferredInstall=null; render(); }); }
+  const bf=$("#bk-file"); if(bf) bf.addEventListener("change",()=>{ const f=bf.files[0]; if(!f) return; const rd=new FileReader();
+    rd.onload=()=>{ const m=$("#bk-msg"); try{ const o=JSON.parse(String(rd.result)); if(!Array.isArray(o.docs)) throw 0;
+      let n=0; for(const d of o.docs){ if((d.kind==="run"&&d.date)||(d.kind==="routine"&&d.routine)){ if(!allDocs().some(x=>x._id===d._id)){ put(d); n++; } } }
+      m.textContent="Restored "+n+" item"+(n===1?"":"s")+"."; m.className="msg"; }
+      catch(e){ m.textContent="That file isn't a Lap Log backup."; m.className="msg err"; } m.hidden=false; };
+    rd.readAsText(f); });
+}
+
+/* ---------- Theme ---------- */
+const HOST_THEME=document.documentElement.getAttribute("data-theme");
+function themePref(){ try{ return localStorage.getItem("laplog.theme")||"auto"; }catch(e){ return "auto"; } }
+function applyTheme(v){ const el=document.documentElement;
+  if(v==="light"||v==="dark") el.setAttribute("data-theme",v); else if(HOST_THEME) el.setAttribute("data-theme",HOST_THEME); else el.removeAttribute("data-theme"); }
+function setTheme(v){ try{ localStorage.setItem("laplog.theme",v); }catch(e){} applyTheme(v); }
+applyTheme(themePref());
+
+/* ---------- Swipe between tabs ---------- */
+const TAB_ORDER=["today","timer","log","progress","plan"];
+(function swipe(){
+  let sx=0,sy=0,st=0,ok=false;
+  const app=document.getElementById("app");
+  app.addEventListener("touchstart",e=>{ if(e.touches.length!==1){ ok=false; return; }
+    const t=e.target; ok=!t.closest("input,textarea,select,.weeks,.chart,.tap");
+    sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now(); },{passive:true});
+  app.addEventListener("touchend",e=>{ if(!ok) return; ok=false;
+    const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Date.now()-st>700||Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*2) return;
+    const i=TAB_ORDER.indexOf(state.tab), n=i+(dx<0?1:-1);
+    if(n>=0&&n<TAB_ORDER.length) setTab(TAB_ORDER[n]); },{passive:true});
+})();
+
+/* ---------- Boot ---------- */
+let deferredInstall=null;
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredInstall=e; if(state.tab==="plan") render(); });
+if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); }catch(e){}
+(function boot(){
+  const saved=lsLoad(); if(saved&&Array.isArray(saved.docs)) ingest(saved.docs);
+  const h=(location.hash||"").slice(1); if(["today","timer","log","progress","plan"].includes(h)) state.tab=h;
+  render();
+  initCloud();
+})();
+</script>
+
+</body></html>
